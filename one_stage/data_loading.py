@@ -84,7 +84,7 @@ def create_questions_answers(texts, np_relations, nps):
     return out_texts, out_questions, out_answers
 
 
-def create_and_save_trainable_data_loader(tokenizer, data_df, batch_size, save_path):
+def create_and_save_trainable_data_loader(tokenizer, data_df, batch_size):
     texts = data_df.text.values
     nps = data_df.nps.values
     np_relations = data_df.np_relations.values
@@ -97,30 +97,31 @@ def create_and_save_trainable_data_loader(tokenizer, data_df, batch_size, save_p
     dataset = TensorDataset(*features_tensors)
     sampler = RandomSampler(dataset)
     dataloader = DataLoader(dataset, sampler=sampler, batch_size=batch_size)
-    torch.save(dataloader, save_path)
+    #torch.save(dataloader, save_path)
+    return dataloader
 
 
-if __name__ == "__main__":
-    random.seed(24)
-    np.random.seed(24)
-    torch.manual_seed(24)
-    model_type = 'distilbert'
-    batch_size = 32
-    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
-    loaders_dir = model_type + '_loaders/'
-    all_df = pd.read_json('train.jsonl', lines=True, orient='records')
-    num_loaders = 32
-    num_dev_texts = 400
-    dev_df = all_df.tail(num_dev_texts)
-    create_and_save_trainable_data_loader(tokenizer, dev_df, batch_size, loaders_dir + "dev_loader.pth")
-    dev_df = None
-    all_df = all_df.head(len(all_df) - num_dev_texts)
-    for i in range(num_loaders):
-        if i == num_loaders - 1:
-            train_df = all_df.iloc[(len(all_df) // num_loaders) * i:, :]
-            create_and_save_trainable_data_loader(tokenizer, train_df, batch_size,
-                                                  loaders_dir + "train_loader{}.pth".format(i))
-            break
-        train_df = all_df.iloc[(len(all_df) // num_loaders) * i:(len(all_df) // num_loaders) * (i + 1), :]
-        create_and_save_trainable_data_loader(tokenizer, train_df, batch_size,
-                                              loaders_dir + "train_loader{}.pth".format(i))
+# if __name__ == "__main__":
+#     random.seed(24)
+#     np.random.seed(24)
+#     torch.manual_seed(24)
+#     model_type = 'distilbert'
+#     batch_size = 32
+#     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+#     loaders_dir = model_type + '_loaders/'
+#     all_df = pd.read_json('train.jsonl', lines=True, orient='records')
+#     num_loaders = 1
+#     num_dev_texts = 400
+#     dev_df = all_df.tail(num_dev_texts)
+#     create_and_save_trainable_data_loader(tokenizer, dev_df, batch_size, loaders_dir + "dev_loader.pth")
+#     dev_df = None
+#     all_df = all_df.head(len(all_df) - num_dev_texts)
+#     for i in range(num_loaders):
+#         if i == num_loaders - 1:
+#             train_df = all_df.iloc[(len(all_df) // num_loaders) * i:, :]
+#             create_and_save_trainable_data_loader(tokenizer, train_df, batch_size,
+#                                                   loaders_dir + "train_loader{}.pth".format(i))
+#             break
+#         train_df = all_df.iloc[(len(all_df) // num_loaders) * i:(len(all_df) // num_loaders) * (i + 1), :]
+#         create_and_save_trainable_data_loader(tokenizer, train_df, batch_size,
+#                                               loaders_dir + "train_loader{}.pth".format(i))
