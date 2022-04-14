@@ -359,7 +359,7 @@ def evaluate(model_path, output_file, tokenizer, acc):
     model.to(acc.device)
     model.eval()
     test_df = pd.read_json("/home/joberant/NLP_2122/galfiebelman/NLP_Project/one_stage/dev.jsonl", lines=True,
-                           orient='records').head(1)
+                           orient='records')
     texts = test_df.text.values
     nps = test_df.nps.values
     dicts = []
@@ -492,8 +492,8 @@ if __name__ == "__main__":
     batch_size = 32
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
     all_df = pd.read_json('/home/joberant/NLP_2122/galfiebelman/NLP_Project/one_stage/train.jsonl', lines=True,
-                          orient='records').head(2)
-    num_dev_texts = 1
+                          orient='records')
+    num_dev_texts = 400
     dev_df = all_df.tail(num_dev_texts)
     train_df = all_df.head(len(all_df) - num_dev_texts)
     train_loader = create_and_save_trainable_data_loader(tokenizer, dev_df, batch_size)
@@ -502,7 +502,7 @@ if __name__ == "__main__":
                                                                num_labels=len(PREPOSITIONS))
     learning_rate = 1e-4
     optimizer = AdamW(model.parameters(), lr=learning_rate, eps=1e-8)
-    epochs = 1
+    epochs = 6
     grad_acc_steps = 1
     model, optimizer, train_loader, dev_loader = accelerator.prepare(model, optimizer, train_loader, dev_loader)
     model_path = '/home/joberant/NLP_2122/galfiebelman/NLP_Project/one_stage/model/'
