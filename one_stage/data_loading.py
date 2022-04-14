@@ -1,7 +1,10 @@
+import random
+
 import pandas as pd
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 import numpy as np
 import torch
+from transformers import AutoTokenizer, AlbertTokenizer
 
 PREPOSITIONS = ['no-relation', 'of', 'against', 'in', 'by', 'on', 'about', 'with', 'after', 'member(s) of',
                 'to', 'from', 'for', 'among', 'under', 'at', 'between', 'during', 'near', 'over', 'before',
@@ -9,12 +12,13 @@ PREPOSITIONS = ['no-relation', 'of', 'against', 'in', 'by', 'on', 'about', 'with
 prep_dict = {prep: idx for idx, prep in enumerate(PREPOSITIONS)}
 
 
-def encode_data(tokenizer, questions, passages, max_length):
+def encode_data(tokenizer, questions, passages):
     input_ids = []
     attention_masks = []
 
     for question, passage in zip(questions, passages):
-        encoded_data = tokenizer.encode_plus(question, passage, max_length=max_length, pad_to_max_length=True,
+        encoded_data = tokenizer.encode_plus(question, passage, pad_to_max_length=True,
+                                             max_length=256,
                                              truncation_strategy="longest_first")
         encoded_pair = encoded_data["input_ids"]
         attention_mask = encoded_data["attention_mask"]
@@ -71,6 +75,7 @@ def create_questions_answers(texts, np_relations, nps):
                 out_answers.append(prep_dict[preps[i]])
                 if i < max_len:
                     b_comp = no_comps[i]
+                    b_comp = phrases[b_comp]['text']
                     b_question = "What is the noun phrase relation between {} and {}?".format(anchor, b_comp)
                     out_texts.append(text)
                     out_questions.append(b_question)
@@ -79,17 +84,43 @@ def create_questions_answers(texts, np_relations, nps):
     return out_texts, out_questions, out_answers
 
 
-def create_trainable_data_loader(tokenizer, data_df, max_seq_length, batch_size):
+def create_and_save_trainable_data_loader(tokenizer, data_df, batch_size, save_path):
     texts = data_df.text.values
     nps = data_df.nps.values
     np_relations = data_df.np_relations.values
     # corefs = data_df.coref.values
     texts, questions, answers = create_questions_answers(texts, np_relations, nps)
     print("encoding")
-    input_ids, attention_masks = encode_data(tokenizer, questions, texts, max_seq_length)
+    input_ids, attention_masks = encode_data(tokenizer, questions, texts)
     features = (input_ids, attention_masks, answers)
     features_tensors = [torch.tensor(feature, dtype=torch.long) for feature in features]
     dataset = TensorDataset(*features_tensors)
     sampler = RandomSampler(dataset)
     dataloader = DataLoader(dataset, sampler=sampler, batch_size=batch_size)
-    return dataloader
+    torch.save(dataloader, save_path)
+
+
+if __name__ == "__main__":
+    random.seed(24)
+    np.random.seed(24)
+    torch.manual_seed(24)
+    model_type = 'distilbert'
+    batch_size = 32
+    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+    loaders_dir = model_type + '_loaders/'
+    all_df = pd.read_json('train.jsonl', lines=True, orient='records')
+    num_loaders = 32
+    num_dev_texts = 400
+    dev_df = all_df.tail(num_dev_texts)
+    create_and_save_trainable_data_loader(tokenizer, dev_df, batch_size, loaders_dir + "dev_loader.pth")
+    dev_df = None
+    all_df = all_df.head(len(all_df) - num_dev_texts)
+    for i in range(num_loaders):
+        if i == num_loaders - 1:
+            train_df = all_df.iloc[(len(all_df) // num_loaders) * i:, :]
+            create_and_save_trainable_data_loader(tokenizer, train_df, batch_size,
+                                                  loaders_dir + "train_loader{}.pth".format(i))
+            break
+        train_df = all_df.iloc[(len(all_df) // num_loaders) * i:(len(all_df) // num_loaders) * (i + 1), :]
+        create_and_save_trainable_data_loader(tokenizer, train_df, batch_size,
+                                              loaders_dir + "train_loader{}.pth".format(i))

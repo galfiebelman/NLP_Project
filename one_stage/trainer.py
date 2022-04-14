@@ -1,11 +1,12 @@
-import pandas as pd
+import os
+import random
 import torch
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, AdamW
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from NLP_Project.one_stage.data_loading import create_trainable_data_loader, PREPOSITIONS
+from NLP_Project.one_stage.data_loading import create_and_save_trainable_data_loader, PREPOSITIONS
 from NLP_Project.one_stage.training_loop import train_model
 
 
@@ -34,45 +35,32 @@ def plot_train_dev_results(train_losses, dev_accs):
     # plt.show()
 
 
-def train(save_path, train_loader_save_path, dev_loader_save_path, train_loader_load_path, dev_loader_load_path):
-    max_seq_length = 256
-    batch_size = 40
-    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
-
-    assert ((dev_loader_load_path is None and train_loader_load_path is None) or (
-                dev_loader_load_path is not None and train_loader_load_path is not None))
-    assert ((dev_loader_save_path is None and train_loader_save_path is None) or (
-            dev_loader_save_path is not None and train_loader_save_path is not None))
-
-    if train_loader_load_path is None:
-        all_df = pd.read_json('train.jsonl', lines=True, orient='records')
-        train_df = all_df.head(1000)
-        dev_df = all_df.tail(100)
-        print("creating loaders")
-        train_loader = create_trainable_data_loader(tokenizer, train_df, max_seq_length, batch_size)
-        print("trainloader done")
-        dev_loader = create_trainable_data_loader(tokenizer, dev_df, max_seq_length, batch_size)
-        print("devloader done")
-
-    else:
-        train_loader = torch.load(train_loader_load_path)
-        dev_loader = torch.load(dev_loader_load_path)
-
-    if train_loader_save_path is not None and train_loader_load_path is None:
-        torch.save(train_loader, train_loader_save_path)
-        torch.save(dev_loader, dev_loader_save_path)
-
+if __name__ == "__main__":
+    random.seed(24)
+    np.random.seed(24)
+    torch.manual_seed(24)
+    model_type = 'distilbert'
+    loaders_dir = model_type + '_loaders/'
+    load = False
+    model_path = "model/" + model_type + '/'
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased", num_labels=len(PREPOSITIONS))
-
+    if not load:
+        model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased",
+                                                                   num_labels=len(PREPOSITIONS))
+    else:
+        model = AutoModelForSequenceClassification.from_pretrained(model_path, num_labels=len(PREPOSITIONS))
     model.to(device)
     learning_rate = 1e-4
     optimizer = AdamW(model.parameters(), lr=learning_rate, eps=1e-8)
-    epochs = 3
+    epochs = 10
     grad_acc_steps = 1
-
-    model, train_losses, dev_accs = train_model(model, epochs, grad_acc_steps, optimizer, train_loader, dev_loader,
-                                                device, save_path)
+    train_loader_paths = [os.path.join(loaders_dir, file) for file in
+                          os.listdir(
+                              "/home/gal/Private/University/Y1S1/NLP/Project/NLP_Project/one_stage/" + loaders_dir) if
+                          "train_loader" in file]
+    dev_loader_path = loaders_dir + "dev_loader.pth"
+    train_losses, dev_accs = train_model(model, epochs, grad_acc_steps, optimizer, train_loader_paths, dev_loader_path,
+                                         device, model_path)
     plot_train_dev_results(train_losses, dev_accs)
     print(train_losses)
     print(dev_accs)

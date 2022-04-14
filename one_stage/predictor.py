@@ -1,15 +1,17 @@
 import json
+import random
 
 import numpy as np
 import pandas as pd
 import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, AutoModelWithLMHead
 
 from NLP_Project.one_stage.data_loading import PREPOSITIONS
 
 
 def evaluate(model_path, output_file):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
     model = AutoModelForSequenceClassification.from_pretrained(model_path, num_labels=len(PREPOSITIONS))
     model.to(device)
@@ -40,3 +42,12 @@ def evaluate(model_path, output_file):
         for d in dicts:
             out_file.write(json.dumps(d))
             out_file.write("\n")
+
+if __name__ == "__main__":
+    random.seed(24)
+    np.random.seed(24)
+    torch.manual_seed(24)
+    model_type = 'distilbert'
+    output_file = 'eval_predictions.jsonl'
+    model_path = "model/" + model_type + '/'
+    evaluate(model_path, output_file)

@@ -4,28 +4,28 @@ import numpy as np
 
 from NLP_Project.one_stage.predictor import evaluate
 from NLP_Project.one_stage.scoring import score
-from NLP_Project.one_stage.trainer import train
+# from NLP_Project.one_stage.trainer import train
 
 
 if __name__ == "__main__":
     random.seed(24)
     np.random.seed(24)
     torch.manual_seed(24)
-    train_loader_load_path = 'train_loader.pth'
-    dev_loader_load_path = 'dev_loader.pth'
-    #train_loader_load_path = None
-    #dev_loader_load_path = None
-
-    train_loader_save_path = 'train_loader.pth'
-    dev_loader_save_path = 'dev_loader.pth'
-    output_file = 'eval_predictions.jsonl'
-    eval_file = 'dev_eval.jsonl'
-    score_file = 'score.jsonl'
-    model_path = "../model/"
-    train(model_path, train_loader_save_path, dev_loader_save_path, train_loader_load_path, dev_loader_load_path)
-    print("start_eval")
-    evaluate(model_path, output_file)
-    print("done eval")
-    print("start scoring")
-    score(output_file, eval_file, score_file)
-    print("done")
+    # train_loader_load_path = 'train_loader.pth'
+    # dev_loader_load_path = 'dev_loader.pth'
+    # #train_loader_load_path = None
+    # #dev_loader_load_path = None
+    #
+    # train_loader_save_path = 'train_loader.pth'
+    # dev_loader_save_path = 'dev_loader.pth'
+    # output_file = 'eval_predictions.jsonl'
+    # eval_file = 'dev_eval.jsonl'
+    # score_file = 'score.jsonl'
+    # model_path = "../model/"
+    # train(model_path, train_loader_save_path, dev_loader_save_path, train_loader_load_path, dev_loader_load_path)
+    # print("start_eval")
+    # evaluate(model_path, output_file)
+    # print("done eval")
+    # print("start scoring")
+    # score(output_file, eval_file, score_file)
+    # print("done")

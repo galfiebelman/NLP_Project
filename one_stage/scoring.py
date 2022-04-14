@@ -1,5 +1,7 @@
 import argparse
 import json
+import random
+
 import torch
 import numpy as np
 
@@ -109,4 +111,14 @@ def score(predictions_file, gold_file, output_file):
     to_file(results, output_file)
 
     print('=== Done ===')
+
+
+if __name__ == "__main__":
+    random.seed(24)
+    np.random.seed(24)
+    torch.manual_seed(24)
+    eval_file = 'dev_eval.jsonl'
+    output_file = 'eval_predictions.jsonl'
+    score_file = 'score.jsonl'
+    score(output_file, eval_file, score_file)
 
