@@ -269,12 +269,12 @@ def create_and_save_trainable_data_loader(tokenizer, data_df, batch_size):
     return dataloader
 
 
-def train_model(model, epochs, grad_acc_steps, optimizer, train_loader, dev_loader, acc):
+def train_model(model, epochs, grad_acc_steps, optimizer, train_loader, dev_loader, acc, model_path):
     train_loss_values = []
     dev_acc_values = []
     best_acc = 0
     cnt = 0
-    best_model = model
+    #best_model = model
     for _ in tqdm(range(epochs), desc="Epoch"):
 
         # Training
@@ -340,23 +340,23 @@ def train_model(model, epochs, grad_acc_steps, optimizer, train_loader, dev_load
         if epoch_dev_accuracy > best_acc:
             best_acc = epoch_dev_accuracy
             print("saved")
-            # model.save_pretrained(model_path)
-            best_model = model
+            model.save_pretrained(model_path)
+            #best_model = model
             cnt = 0
         else:
             cnt += 1
             if cnt == epochs // 3:
-                return train_loss_values, dev_acc_values, best_model
+                return train_loss_values, dev_acc_values
 
-    return train_loss_values, dev_acc_values, best_model
+    return train_loss_values, dev_acc_values
 
 
-def evaluate(model, output_file, tokenizer, acc):
+def evaluate(model_path, output_file, tokenizer, acc):
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
-    # model = AutoModelForSequenceClassification.from_pretrained(model_path, num_labels=len(PREPOSITIONS))
-    # model.to(device)
+    model = AutoModelForSequenceClassification.from_pretrained(model_path, num_labels=len(PREPOSITIONS))
+    model.to(acc.device)
     model.eval()
     test_df = pd.read_json("/home/joberant/NLP_2122/galfiebelman/NLP_Project/one_stage/dev.jsonl", lines=True,
                            orient='records').head(1)
@@ -505,12 +505,13 @@ if __name__ == "__main__":
     epochs = 1
     grad_acc_steps = 1
     model, optimizer, train_loader, dev_loader = accelerator.prepare(model, optimizer, train_loader, dev_loader)
-    train_losses, dev_accs, model = train_model(model, epochs, grad_acc_steps, optimizer, train_loader, dev_loader,
-                                                accelerator)
+    model_path = '/home/joberant/NLP_2122/galfiebelman/NLP_Project/one_stage/model/'
+    train_losses, dev_accs = train_model(model, epochs, grad_acc_steps, optimizer, train_loader, dev_loader,
+                                                accelerator, model_path)
     print(train_losses)
     print(dev_accs)
     output_file = '/home/joberant/NLP_2122/galfiebelman/NLP_Project/one_stage/eval_predictions.jsonl'
-    evaluate(model, output_file, tokenizer, accelerator)
+    evaluate(model_path, output_file, tokenizer, accelerator)
     eval_file = '/home/joberant/NLP_2122/galfiebelman/NLP_Project/one_stage/dev_eval.jsonl'
     score_file = '/home/joberant/NLP_2122/galfiebelman/NLP_Project/one_stage/score.jsonl'
     score(output_file, eval_file, score_file)
