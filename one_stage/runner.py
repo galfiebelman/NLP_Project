@@ -358,7 +358,8 @@ def evaluate(model, output_file, tokenizer, acc):
     # model = AutoModelForSequenceClassification.from_pretrained(model_path, num_labels=len(PREPOSITIONS))
     # model.to(device)
     model.eval()
-    test_df = pd.read_json("dev.jsonl", lines=True, orient='records').head(1)
+    test_df = pd.read_json("/home/joberant/NLP_2122/galfiebelman/NLP_Project/one_stage/dev.jsonl", lines=True,
+                           orient='records').head(1)
     texts = test_df.text.values
     nps = test_df.nps.values
     dicts = []
@@ -384,7 +385,6 @@ def evaluate(model, output_file, tokenizer, acc):
         for d in dicts:
             out_file.write(json.dumps(d))
             out_file.write("\n")
-    return out_file
 
 
 def load_data(in_f):
@@ -491,7 +491,8 @@ if __name__ == "__main__":
     accelerator = Accelerator()
     batch_size = 32
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
-    all_df = pd.read_json('train.jsonl', lines=True, orient='records').head(2)
+    all_df = pd.read_json('/home/joberant/NLP_2122/galfiebelman/NLP_Project/one_stage/train.jsonl', lines=True,
+                          orient='records').head(2)
     num_dev_texts = 1
     dev_df = all_df.tail(num_dev_texts)
     train_df = all_df.head(len(all_df) - num_dev_texts)
@@ -508,8 +509,8 @@ if __name__ == "__main__":
                                                 accelerator)
     print(train_losses)
     print(dev_accs)
-    output_file = 'eval_predictions.jsonl'
-    out_file = evaluate(model, output_file, tokenizer, accelerator)
-    eval_file = 'dev_eval.jsonl'
-    score_file = 'score.jsonl'
+    output_file = '/home/joberant/NLP_2122/galfiebelman/NLP_Project/one_stage/eval_predictions.jsonl'
+    evaluate(model, output_file, tokenizer, accelerator)
+    eval_file = '/home/joberant/NLP_2122/galfiebelman/NLP_Project/one_stage/dev_eval.jsonl'
+    score_file = '/home/joberant/NLP_2122/galfiebelman/NLP_Project/one_stage/score.jsonl'
     score(output_file, eval_file, score_file)
