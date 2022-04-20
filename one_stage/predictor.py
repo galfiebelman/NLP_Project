@@ -9,14 +9,11 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer, Auto
 from NLP_Project.one_stage.data_loading import PREPOSITIONS
 
 
-def evaluate(model_path, output_file):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+def evaluate(model_path, output_file, tokenizer, acc):
     model = AutoModelForSequenceClassification.from_pretrained(model_path, num_labels=len(PREPOSITIONS))
-    model.to(device)
+    model.to(acc.device)
     model.eval()
-    test_df = pd.read_json("dev.jsonl", lines=True, orient='records')
+    test_df = pd.read_json("test_unlabaled.jsonl", lines=True, orient='records')
     texts = test_df.text.values
     nps = test_df.nps.values
     dicts = []
@@ -30,7 +27,7 @@ def evaluate(model_path, output_file):
                     continue
                 comp = phrases[phrase_2]['text']
                 question = "What is the noun phrase relation between {} and {}?".format(anchor, comp)
-                sequence = tokenizer.encode_plus(question, text, return_tensors="pt")['input_ids'].to(device)
+                sequence = tokenizer.encode_plus(question, text, return_tensors="pt")['input_ids'].to(acc.device)
                 with torch.no_grad():
                     out = model(sequence)[0]
                 probabilities = torch.softmax(out, dim=1).detach().cpu().tolist()[0]
@@ -42,12 +39,3 @@ def evaluate(model_path, output_file):
         for d in dicts:
             out_file.write(json.dumps(d))
             out_file.write("\n")
-
-if __name__ == "__main__":
-    random.seed(24)
-    np.random.seed(24)
-    torch.manual_seed(24)
-    model_type = 'distilbert'
-    output_file = 'eval_predictions.jsonl'
-    model_path = "model/" + model_type + '/'
-    evaluate(model_path, output_file)

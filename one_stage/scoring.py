@@ -8,7 +8,6 @@ import numpy as np
 from allennlp.training.metrics.f1_measure import F1Measure
 from mcf1_measure import MCF1Measure
 
-
 preposition_list = ['no-relation', 'of', 'against', 'in', 'by', 'on', 'about', 'with', 'after', 'member(s) of',
                     'to', 'from', 'for', 'among', 'under', 'at', 'between', 'during', 'near', 'over', 'before',
                     'inside', 'outside', 'into', 'around']
@@ -111,14 +110,3 @@ def score(predictions_file, gold_file, output_file):
     to_file(results, output_file)
 
     print('=== Done ===')
-
-
-if __name__ == "__main__":
-    random.seed(24)
-    np.random.seed(24)
-    torch.manual_seed(24)
-    eval_file = 'dev_eval.jsonl'
-    output_file = 'eval_predictions.jsonl'
-    score_file = 'score.jsonl'
-    score(output_file, eval_file, score_file)
-
