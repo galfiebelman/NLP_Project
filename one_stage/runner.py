@@ -19,7 +19,7 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained("roberta-large")
     train_df = pd.read_json('train.jsonl', lines=True, orient='records')
     dev_df = pd.read_json('dev.jsonl', lines=True, orient='records')
-    train_loader = create_and_save_trainable_data_loader(tokenizer, dev_df, batch_size)
+    train_loader = create_and_save_trainable_data_loader(tokenizer, train_df, batch_size)
     dev_loader = create_and_save_trainable_data_loader(tokenizer, dev_df, batch_size)
     model_path = 'model/'
     model = AutoModelForSequenceClassification.from_pretrained("roberta-large", num_labels=len(PREPOSITIONS))
