@@ -20,7 +20,7 @@ def train_model(model, epochs, grad_acc_steps, optimizer, train_loader, dev_load
             attention_masks = batch[1].to(device)
             labels = batch[2].to(device)
 
-            outputs = model(input_ids, token_type_ids=None, attention_mask=attention_masks, labels=labels)
+            outputs = model(input_ids, attention_mask=attention_masks, labels=labels)
 
             loss = outputs[0]
             loss = loss / grad_acc_steps
@@ -46,7 +46,7 @@ def train_model(model, epochs, grad_acc_steps, optimizer, train_loader, dev_load
             labels = batch[2]
 
             with torch.no_grad():
-                outputs = model(input_ids, token_type_ids=None, attention_mask=attention_masks)
+                outputs = model(input_ids, attention_mask=attention_masks)
 
             logits = outputs[0]
             logits = logits.detach().cpu().numpy()

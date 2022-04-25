@@ -16,11 +16,19 @@ if __name__ == "__main__":
     dev_loader_load_path = 'dev_loader.pth'
     train_loader_save_path = 'train_loader.pth'
     dev_loader_save_path = 'dev_loader.pth'
+    binary_train_loader_load_path = 'binary_train_loader.pth'
+    binary_dev_loader_load_path = 'binary_dev_loader.pth'
+    binary_train_loader_save_path = 'binary_train_loader.pth'
+    binary_dev_loader_save_path = 'binary_dev_loader.pth'
     output_file = 'eval_predictions.jsonl'
     eval_file = 'dev_eval.jsonl'
     score_file = 'score.jsonl'
     model_path = "model/"
-    train(model_path, train_loader_save_path, dev_loader_save_path, train_loader_load_path, dev_loader_load_path)
+    binary_model_path = "binary_model/"
+    train(model_path, train_loader_save_path, dev_loader_save_path,
+          train_loader_load_path, dev_loader_load_path, False)
+    train(model_path, train_loader_save_path, dev_loader_save_path,
+          train_loader_load_path, dev_loader_load_path, True)
     evaluate(model_path, output_file)
     score(output_file, eval_file, score_file)
 

@@ -5,15 +5,21 @@ import pandas as pd
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from data_loading import PREPOSITIONS, RELATIONS
+from data_loading import PREPOSITIONS, RELATIONS, ANSWERS
 
 
-def evaluate(model_path, output_file):
+def evaluate(model_path, binary_model_path, output_file):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    tokenizer = AutoTokenizer.from_pretrained("distilroberta-base")
-    model = AutoModelForSequenceClassification.from_pretrained(model_path, num_labels=len(RELATIONS))
+    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+    model = AutoModelForSequenceClassification.from_pretrained(model_path,
+                                                               num_labels=len(
+                                                                   RELATIONS))
     model.to(device)
     model.eval()
+    binary_model = AutoModelForSequenceClassification.from_pretrained(
+        binary_model_path, num_labels=len(ANSWERS))
+    binary_model.to(device)
+    binary_model.eval()
     test_df = pd.read_json("dev.jsonl", lines=True, orient='records')
     texts = test_df.text.values
     nps = test_df.nps.values
@@ -27,13 +33,24 @@ def evaluate(model_path, output_file):
                     cur_dict["predicted_prepositions"].append(0)
                     continue
                 comp = phrases[phrase_2]['text']
-                question = "what is the relation between {} and {}?".format(anchor, comp)
-                sequence = tokenizer.encode_plus(question.lower(), text, return_tensors="pt")['input_ids'].to(device)
+                question = "Is there a relation between {} and {}?".format(
+                    anchor, comp)
+                sequence = tokenizer.encode_plus(question.lower(), text, return_tensors="pt")[
+                    'input_ids'].to(device)
                 with torch.no_grad():
-                    out = model(sequence)[0]
+                    out = binary_model(sequence)[0]
                 probabilities = torch.softmax(out, dim=1).detach().cpu().tolist()[0]
                 pred = np.argmax(np.array(probabilities))
-                cur_dict["predicted_prepositions"].append(int(pred))
+                if int(pred) == 0:
+                    cur_dict["predicted_prepositions"].append(int(pred))
+                else:
+                    question = "what is the relation between {} and {}?".format(anchor, comp)
+                    sequence = tokenizer.encode_plus(question.lower(), text, return_tensors="pt")['input_ids'].to(device)
+                    with torch.no_grad():
+                        out = model(sequence)[0]
+                    probabilities = torch.softmax(out, dim=1).detach().cpu().tolist()[0]
+                    pred = np.argmax(np.array(probabilities))
+                    cur_dict["predicted_prepositions"].append(int(pred)+1)
         dicts.append(cur_dict)
 
     with open(output_file, 'w') as out_file:
