@@ -38,7 +38,7 @@ def plot_train_dev_results(train_losses, dev_accs):
 def train(save_path, train_set_save_path, dev_set_save_path,
           train_set_load_path, dev_set_load_path, binary=False):
     max_seq_length = 256
-    batch_size = 16
+    batch_size = 64
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
     assert ((dev_set_load_path is None and train_set_load_path is None) or (

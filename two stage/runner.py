@@ -25,10 +25,11 @@ if __name__ == "__main__":
     score_file = 'score.jsonl'
     model_path = "model/"
     binary_model_path = "binary_model/"
+    train(binary_model_path, train_loader_save_path, dev_loader_save_path,
+          None, None, True)
     train(model_path, train_loader_save_path, dev_loader_save_path,
-          train_loader_load_path, dev_loader_load_path, False)
-    train(model_path, train_loader_save_path, dev_loader_save_path,
-          train_loader_load_path, dev_loader_load_path, True)
+          None, None, False)
+
     evaluate(model_path, output_file)
     score(output_file, eval_file, score_file)
 

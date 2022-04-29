@@ -73,9 +73,9 @@ def create_binary_questions_answers(texts, np_relations, nps):
                 if len(cur_answer_df) > 0:
                     cur_answer_df = cur_answer_df[cur_answer_df['complement'] == phrase_2]
                 if len(cur_answer_df) != 0:
-                    answer = ANSWERS[0]
+                    answer = 0
                 else:
-                    answer = ANSWERS[1]
+                    answer = 1
                 out_texts.append(text)
                 out_questions.append(question.lower())
                 out_answers.append(answer)
